@@ -26,4 +26,4 @@ class Medico(MedicoBase, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
 
-    especialidades: list["Especialidade"] = Relationship(link_model=MedicoEspecialidade)
+    especialidades: list["Especialidade"] = Relationship(back_populates="medicos", link_model=MedicoEspecialidade)

@@ -59,4 +59,45 @@ def listar_especialidades(
         ),
     )
 
-#vou terminar ainda, nao mexam em nada
+router.get("/{especialidade_id}", response_model=EspecialidadePublic)
+def buscar_especialidade(especialidade_id: int, session: Session = Depends(get_session)):
+    especialidade = session.get(Especialidade, especialidade_id)
+
+    if not especialidade:
+        raise HTTPException(status_code=404, detail="Especialidade não encontrada")
+
+    return especialidade
+
+
+@router.patch("/{especialidade_id}", response_model=EspecialidadePublic)
+def atualizar_especialidade(
+    especialidade_id: int,
+    dados: EspecialidadeUpdate,
+    session: Session = Depends(get_session),
+):
+    especialidade = session.get(Especialidade, especialidade_id)
+
+    if not especialidade:
+        raise HTTPException(status_code=404, detail="Especialidade não encontrada")
+
+    especialidade.sqlmodel_update(dados.model_dump(exclude_unset=True))
+    session.add(especialidade)
+
+    try:
+        session.commit()
+        session.refresh(especialidade)
+        return especialidade
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="Já existe uma especialidade com esse nome")
+
+
+@router.delete("/{especialidade_id}", status_code=204)
+def excluir_especialidade(especialidade_id: int, session: Session = Depends(get_session)):
+    especialidade = session.get(Especialidade, especialidade_id)
+
+    if not especialidade:
+        raise HTTPException(status_code=404, detail="Especialidade não encontrada")
+
+    session.delete(especialidade)
+    session.commit()

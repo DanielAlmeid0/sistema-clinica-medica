@@ -12,7 +12,7 @@ class AgendaRegularBase(SQLModel):
 class AgendaRegular(AgendaRegularBase, table=True):
     __tablename__ = "Agendas_regulares"
 
-    id:int | None = Field(default=None, primary_key="medicos.id", index=True)
+    id:int | None = Field(default=None, primary_key=True)
 
 class BloqueioAgendaBase(SQLModel):
     medico_id: int = Field(foreign_key="medicos.id", index=True)

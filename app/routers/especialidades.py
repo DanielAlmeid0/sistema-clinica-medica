@@ -59,7 +59,7 @@ def listar_especialidades(
         ),
     )
 
-router.get("/{especialidade_id}", response_model=EspecialidadePublic)
+@router.get("/{especialidade_id}", response_model=EspecialidadePublic)
 def buscar_especialidade(especialidade_id: int, session: Session = Depends(get_session)):
     especialidade = session.get(Especialidade, especialidade_id)
 

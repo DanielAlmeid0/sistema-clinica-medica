@@ -46,3 +46,26 @@ def criar_agenda(medico_id: int, dados: AgendaCreate, session: Session = Depends
     session.refresh(agenda)
 
     return agenda
+
+@router.get("/medicos/{medico_id}/agendas", response_model=list[AgendaPublic])
+def listar_agendas(medico_id: int, session: Session = Depends(get_session)):
+    if not session.get(Medico, medico_id):
+        raise HTTPException(status_code=404, detail="Médico não encontrado")
+
+    consulta = (
+        select(AgendaRegular)
+        .where(AgendaRegular.medico_id == medico_id)
+        .order_by(AgendaRegular.dia_semana, AgendaRegular.hora_inicio)
+    )
+
+    return session.exec(consulta).all()
+
+@router.delete("/agendas/{agenda_id}", status_code=204)
+def excluir_agenda(agenda_id: int, session: Session = Depends(get_session)):
+    agenda = session.get(AgendaRegular, agenda_id)
+
+    if not agenda:
+        raise HTTPException(status_code=404, detail="Agenda não encontrada")
+
+    session.delete(agenda)
+    session.commit()

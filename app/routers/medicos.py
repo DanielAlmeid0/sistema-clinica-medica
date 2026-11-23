@@ -25,6 +25,21 @@ def buscar_medico_ou_404(medico_id: int, session: Session) -> Medico:
 
     return medico
 
+@router.post("/", response_model=MedicoPublic, status_code=201)
+def criar_medico(dados: MedicoCreate, session: Session = Depends(get_session)):
+    medico = Medico.model_validate(dados)
+    session.add(medico)
+
+    try:
+        session.commit()
+        session.refresh(medico)
+        return medico
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="Já existe um médico com esse CRM ou email")
+
+
+
 @router.get("/", response_model=PaginaMedicos)
 def listar_medicos(
     pagina: int = Query(1, ge=1),
@@ -64,4 +79,5 @@ def listar_medicos(
             total_paginas=total_paginas,
         ),
     )
+
 

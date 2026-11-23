@@ -11,6 +11,15 @@ from app.schemas.paginacao import Paginacao
 router = APIRouter(prefix="/pacientes", tags=["Pacientes"])
 
 
+def buscar_paciente_ou_404(paciente_id: int, session: Session) -> Paciente:
+    paciente = session.get(Paciente, paciente_id)
+
+    if not paciente:
+        raise HTTPException(status_code=404, detail="Paciente não encontrado")
+
+    return paciente
+
+
 @router.post("/", response_model=PacientePublic, status_code=201)
 def criar_paciente(dados: PacienteCreate, session: Session = Depends(get_session)):
     paciente = Paciente.model_validate(dados)
@@ -64,3 +73,8 @@ def listar_pacientes(
             total_paginas=total_paginas,
         ),
     )
+
+
+@router.get("/{paciente_id}", response_model=PacientePublic)
+def buscar_paciente(paciente_id: int, session: Session = Depends(get_session)):
+    return buscar_paciente_ou_404(paciente_id, session)

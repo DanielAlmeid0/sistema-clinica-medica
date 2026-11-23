@@ -80,4 +80,83 @@ def listar_medicos(
         ),
     )
 
+@router.get("/{medico_id}", response_model=MedicoPublicDetalhado)
+def buscar_medico(medico_id: int, session: Session = Depends(get_session)):
+    return buscar_medico_ou_404(medico_id, session)
 
+
+@router.patch("/{medico_id}", response_model=MedicoPublic)
+def atualizar_medico(medico_id: int, dados: MedicoUpdate, session: Session = Depends(get_session)):
+    medico = buscar_medico_ou_404(medico_id, session)
+
+    medico.sqlmodel_update(dados.model_dump(exclude_unset=True))
+    session.add(medico)
+
+    try:
+        session.commit()
+        session.refresh(medico)
+        return medico
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="Já existe um médico com esse CRM ou email")
+
+
+@router.delete("/{medico_id}", status_code=204)
+def excluir_medico(medico_id: int, session: Session = Depends(get_session)):
+    medico = buscar_medico_ou_404(medico_id, session)
+
+    tem_consulta = session.exec(select(Consulta).where(Consulta.medico_id == medico_id)).first()
+    if tem_consulta:
+        raise HTTPException(
+            status_code=409,
+            detail="O médico possui consultas e não pode ser excluído. Desative o cadastro (ativo = false).",
+        )
+
+    session.delete(medico)
+
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="O médico possui agenda ou bloqueios cadastrados e não pode ser excluído")
+
+
+@router.post("/{medico_id}/especialidades", response_model=MedicoPublicDetalhado, status_code=201)
+def vincular_especialidade(medico_id: int, dados: VinculoEspecialidade, session: Session = Depends(get_session)):
+    medico = buscar_medico_ou_404(medico_id, session)
+
+    if not session.get(Especialidade, dados.especialidade_id):
+        raise HTTPException(status_code=404, detail="Especialidade não encontrada")
+
+    if session.get(MedicoEspecialidade, (medico_id, dados.especialidade_id)):
+        raise HTTPException(status_code=409, detail="O médico já está vinculado a essa especialidade")
+
+    vinculo = MedicoEspecialidade(medico_id=medico_id, especialidade_id=dados.especialidade_id, rqe=dados.rqe)
+    session.add(vinculo)
+    session.commit()
+    session.refresh(medico)
+
+    return medico
+
+
+@router.delete("/{medico_id}/especialidades/{especialidade_id}", status_code=204)
+def desvincular_especialidade(medico_id: int, especialidade_id: int, session: Session = Depends(get_session)):
+    vinculo = session.get(MedicoEspecialidade, (medico_id, especialidade_id))
+
+    if not vinculo:
+        raise HTTPException(status_code=404, detail="O médico não está vinculado a essa especialidade")
+
+    tem_agenda = session.exec(
+        select(AgendaRegular).where(
+            AgendaRegular.medico_id == medico_id,
+            AgendaRegular.especialidade_id == especialidade_id,
+        )
+    ).first()
+    if tem_agenda:
+        raise HTTPException(
+            status_code=409,
+            detail="O médico tem agenda cadastrada nessa especialidade. Remova a agenda antes de desvincular.",
+        )
+
+    session.delete(vinculo)
+    session.commit()

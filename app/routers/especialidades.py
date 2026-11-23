@@ -99,5 +99,13 @@ def excluir_especialidade(especialidade_id: int, session: Session = Depends(get_
     if not especialidade:
         raise HTTPException(status_code=404, detail="Especialidade não encontrada")
 
+    if especialidade.medicos:
+        raise HTTPException(status_code=409, detail="A especialidade tem médicos vinculados e não pode ser excluída")
+
     session.delete(especialidade)
-    session.commit()
+
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="A especialidade possui consultas ou agendas e não pode ser excluída")

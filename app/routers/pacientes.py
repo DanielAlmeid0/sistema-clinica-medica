@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from app.core.database import get_session
-from app.models import Paciente
+from app.models import Consulta, Paciente
 from app.schemas.paciente import PacienteCreate, PaginaPacientes, PacientePublic, PacienteUpdate
 from app.schemas.paginacao import Paginacao
 
@@ -94,3 +94,23 @@ def atualizar_paciente(paciente_id: int, dados: PacienteUpdate, session: Session
     except IntegrityError:
         session.rollback()
         raise HTTPException(status_code=409, detail="Já existe um paciente com esse CPF ou email")
+
+
+@router.delete("/{paciente_id}", status_code=204)
+def excluir_paciente(paciente_id: int, session: Session = Depends(get_session)):
+    paciente = buscar_paciente_ou_404(paciente_id, session)
+
+    tem_consulta = session.exec(select(Consulta).where(Consulta.paciente_id == paciente_id)).first()
+    if tem_consulta:
+        raise HTTPException(
+            status_code=409,
+            detail="O paciente possui consultas e não pode ser excluído. Desative o cadastro (ativo = false).",
+        )
+
+    session.delete(paciente)
+
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="O paciente possui registros associados e não pode ser excluído")

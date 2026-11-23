@@ -5,7 +5,7 @@ from sqlmodel import Session, select
 
 from app.core.database import get_session
 from app.models import Paciente
-from app.schemas.paciente import PacienteCreate, PaginaPacientes, PacientePublic
+from app.schemas.paciente import PacienteCreate, PaginaPacientes, PacientePublic, PacienteUpdate
 from app.schemas.paginacao import Paginacao
 
 router = APIRouter(prefix="/pacientes", tags=["Pacientes"])
@@ -78,3 +78,19 @@ def listar_pacientes(
 @router.get("/{paciente_id}", response_model=PacientePublic)
 def buscar_paciente(paciente_id: int, session: Session = Depends(get_session)):
     return buscar_paciente_ou_404(paciente_id, session)
+
+
+@router.patch("/{paciente_id}", response_model=PacientePublic)
+def atualizar_paciente(paciente_id: int, dados: PacienteUpdate, session: Session = Depends(get_session)):
+    paciente = buscar_paciente_ou_404(paciente_id, session)
+
+    paciente.sqlmodel_update(dados.model_dump(exclude_unset=True))
+    session.add(paciente)
+
+    try:
+        session.commit()
+        session.refresh(paciente)
+        return paciente
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="Já existe um paciente com esse CPF ou email")

@@ -1,4 +1,4 @@
-from datetime import datetime
+from pydantic import NaiveDatetime
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -6,8 +6,8 @@ class ConsultaBase(SQLModel):
     paciente_id: int = Field(foreign_key="pacientes.id", index=True)
     medico_id: int = Field(foreign_key="medicos.id", index=True)
     especialidade_id: int = Field(foreign_key="especialidade.id", index=True)
-    data_hora_inicio: datetime = Field(index=True)
-    data_hora_fim: datetime
+    data_hora_inicio: NaiveDatetime = Field(index=True)
+    data_hora_fim: NaiveDatetime
     status: str = Field(default="agendada", max_length=20, index=True)
 
 

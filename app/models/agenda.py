@@ -1,4 +1,5 @@
-from datetime import datetime, time
+from datetime import time
+from pydantic import NaiveDatetime
 from sqlmodel import Field, SQLModel
 
 class AgendaRegularBase(SQLModel):
@@ -16,8 +17,8 @@ class AgendaRegular(AgendaRegularBase, table=True):
 
 class BloqueioAgendaBase(SQLModel):
     medico_id: int = Field(foreign_key="medicos.id", index=True)
-    data_hora_inicio: datetime = Field(index=True)
-    data_hora_fim: datetime = Field(index=True)
+    data_hora_inicio: NaiveDatetime = Field(index=True)
+    data_hora_fim: NaiveDatetime = Field(index=True)
     motivo: str = Field(min_length=3, max_length=200)
 
 class BloqueioAgenda(BloqueioAgendaBase, table=True):

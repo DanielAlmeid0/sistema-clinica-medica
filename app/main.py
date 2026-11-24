@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import agendas, consultas, especialidades, medicos, pacientes
+from app.routers import agendas, bloqueios, consultas, especialidades, medicos, pacientes
 
 app = FastAPI(title="Sistema de Clínica Médica")
 
@@ -8,6 +8,7 @@ app.include_router(medicos.router)
 app.include_router(pacientes.router)
 app.include_router(agendas.router)
 app.include_router(consultas.router)
+app.include_router(bloqueios.router)
 
 
 @app.get("/")

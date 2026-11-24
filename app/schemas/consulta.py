@@ -2,6 +2,7 @@ from pydantic import NaiveDatetime
 from sqlmodel import SQLModel
 
 from app.models.consulta import ConsultaBase
+from app.schemas.paginacao import Paginacao
 
 
 class ConsultaCreate(SQLModel):
@@ -13,3 +14,8 @@ class ConsultaCreate(SQLModel):
 
 class ConsultaPublic(ConsultaBase):
     id: int
+
+
+class PaginaConsultas(SQLModel):
+    dados: list[ConsultaPublic]
+    paginacao: Paginacao

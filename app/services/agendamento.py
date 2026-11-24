@@ -144,3 +144,22 @@ def agendar_consulta(session: Session, dados: ConsultaCreate) -> Consulta:
         raise HTTPException(status_code=409, detail="Não foi possível registrar a consulta")
 
     return consulta
+
+
+def cancelar_consulta(session: Session, consulta_id: int) -> Consulta:
+    consulta = session.get(Consulta, consulta_id)
+    if not consulta:
+        raise HTTPException(status_code=404, detail="Consulta não encontrada")
+
+    if consulta.status != STATUS_AGENDADA:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Só é possível cancelar consultas agendadas (status atual: {consulta.status})",
+        )
+
+    consulta.status = STATUS_CANCELADA
+    session.add(consulta)
+    session.commit()
+    session.refresh(consulta)
+
+    return consulta

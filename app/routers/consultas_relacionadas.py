@@ -46,3 +46,20 @@ def listar_consultas_do_medico(
 
     condicoes = [Consulta.medico_id == medico_id] + condicoes_de_filtro(status, data_inicio, data_fim)
     return listar_consultas_detalhadas(session, condicoes, pagina, tamanho_pagina)
+
+
+@router.get("/especialidades/{especialidade_id}/consultas", response_model=PaginaConsultasDetalhadas)
+def listar_consultas_da_especialidade(
+    especialidade_id: int,
+    pagina: int = Query(1, ge=1),
+    tamanho_pagina: int = Query(10, ge=1, le=100),
+    status: StatusConsulta | None = None,
+    data_inicio: date | None = None,
+    data_fim: date | None = None,
+    session: Session = Depends(get_session),
+):
+    if not session.get(Especialidade, especialidade_id):
+        raise HTTPException(status_code=404, detail="Especialidade não encontrada")
+
+    condicoes = [Consulta.especialidade_id == especialidade_id] + condicoes_de_filtro(status, data_inicio, data_fim)
+    return listar_consultas_detalhadas(session, condicoes, pagina, tamanho_pagina)

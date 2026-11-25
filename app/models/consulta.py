@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from pydantic import NaiveDatetime
 from sqlmodel import Field, Relationship, SQLModel
@@ -50,6 +50,6 @@ class Receita(ReceitaBase, table=True):
     __tablename__ = "receitas"
 
     id: int | None = Field(default=None, primary_key=True)
-    criado_em: datetime = Field(default_factory=datetime.now)
+    criado_em: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     atendimento: Prontuario = Relationship(back_populates="receitas")

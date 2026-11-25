@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
 
 from app.routers import (
+    estatisticas,
     agendas,
     atendimentos,
     bloqueios,
@@ -26,6 +27,7 @@ app.include_router(agendas.router)
 app.include_router(consultas.router)
 app.include_router(bloqueios.router)
 app.include_router(consultas_relacionadas.router)
+app.include_router(estatisticas.router)
 app.include_router(atendimentos.router)
 
 

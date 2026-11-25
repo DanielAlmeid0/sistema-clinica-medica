@@ -1,9 +1,11 @@
+from datetime import date, datetime, time, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
 from app.core.database import get_session
-from app.models import AgendaRegular, Especialidade, Medico, MedicoEspecialidade
-from app.schemas.agenda import AgendaCreate, AgendaPublic
+from app.models import AgendaRegular, BloqueioAgenda, Consulta, Especialidade, Medico, MedicoEspecialidade
+from app.schemas.agenda import AgendaCreate, AgendaPublic, HorarioDisponivel
+from app.services.agendamento import STATUS_CANCELADA
 
 router = APIRouter(tags=["Agendas"])
 
@@ -69,3 +71,75 @@ def excluir_agenda(agenda_id: int, session: Session = Depends(get_session)):
 
     session.delete(agenda)
     session.commit()
+
+def _esta_ocupado(itens, inicio: datetime, fim: datetime) -> bool:
+    for item in itens:
+        if item.data_hora_inicio < fim and item.data_hora_fim > inicio:
+            return True
+    return False
+
+@router.get("/medicos/{medico_id}/disponibilidade", response_model=list[HorarioDisponivel])
+def listar_disponibilidade(
+    medico_id: int,
+    data: date,
+    especialidade_id: int,
+    session: Session = Depends(get_session),
+):
+    medico = session.get(Medico, medico_id)
+    if not medico:
+        raise HTTPException(status_code=404, detail="Médico não encontrado")
+
+    if not medico.ativo:
+        raise HTTPException(status_code=400, detail="Médico inativo não recebe consultas")
+
+    if not session.get(Especialidade, especialidade_id):
+        raise HTTPException(status_code=404, detail="Especialidade não encontrada")
+
+    agendas = session.exec(
+        select(AgendaRegular).where(
+            AgendaRegular.medico_id == medico_id,
+            AgendaRegular.especialidade_id == especialidade_id,
+            AgendaRegular.dia_semana == data.weekday(),
+        )
+    ).all()
+
+    inicio_dia = datetime.combine(data, time.min)
+    fim_dia = inicio_dia + timedelta(days=1)
+
+    consultas = session.exec(
+        select(Consulta).where(
+            Consulta.medico_id == medico_id,
+            Consulta.status != STATUS_CANCELADA,
+            Consulta.data_hora_inicio < fim_dia,
+            Consulta.data_hora_fim > inicio_dia,
+        )
+    ).all()
+
+    bloqueios = session.exec(
+        select(BloqueioAgenda).where(
+            BloqueioAgenda.medico_id == medico_id,
+            BloqueioAgenda.data_hora_inicio < fim_dia,
+            BloqueioAgenda.data_hora_fim > inicio_dia,
+        )
+    ).all()
+
+    agora = datetime.now()
+    livres = []
+
+    for agenda in agendas:
+        duracao = timedelta(minutes=agenda.duracao_consulta)
+        inicio = datetime.combine(data, agenda.hora_inicio)
+        limite = datetime.combine(data, agenda.hora_fim)
+
+        while inicio + duracao <= limite:
+            fim = inicio + duracao
+            if (
+                inicio > agora
+                and not _esta_ocupado(consultas, inicio, fim)
+                and not _esta_ocupado(bloqueios, inicio, fim)
+            ):
+                livres.append(HorarioDisponivel(inicio=inicio, fim=fim))
+            inicio = fim
+
+    livres.sort(key=lambda horario: horario.inicio)
+    return livres

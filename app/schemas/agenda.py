@@ -1,4 +1,5 @@
 from datetime import time
+from pydantic import NaiveDatetime
 
 from sqlmodel import Field, SQLModel
 
@@ -14,3 +15,7 @@ class AgendaCreate(SQLModel):
 
 class AgendaPublic(AgendaRegularBase):
     id: int
+
+class HorarioDisponivel(SQLModel):
+    inicio: NaiveDatetime
+    fim: NaiveDatetime

@@ -22,3 +22,21 @@ class ConsultaPublic(ConsultaBase):
 class PaginaConsultas(SQLModel):
     dados: list[ConsultaPublic]
     paginacao: Paginacao
+
+
+class ConsultaDetalhada(SQLModel):
+    id: int
+    data_hora_inicio: NaiveDatetime
+    data_hora_fim: NaiveDatetime
+    status: str
+    paciente_id: int
+    paciente_nome: str
+    medico_id: int
+    medico_nome: str
+    especialidade_id: int
+    especialidade_nome: str
+
+
+class PaginaConsultasDetalhadas(SQLModel):
+    dados: list[ConsultaDetalhada]
+    paginacao: Paginacao

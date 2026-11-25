@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
 
-from app.routers import agendas, bloqueios, consultas, especialidades, medicos, pacientes
+from app.routers import agendas, bloqueios, consultas, consultas_relacionadas, especialidades, medicos, pacientes
 
 
 logger = logging.getLogger("uvicorn.error")
@@ -17,6 +17,7 @@ app.include_router(pacientes.router)
 app.include_router(agendas.router)
 app.include_router(consultas.router)
 app.include_router(bloqueios.router)
+app.include_router(consultas_relacionadas.router)
 
 @app.exception_handler(IntegrityError)
 def tratar_conflito_de_dados(request: Request, erro: IntegrityError):

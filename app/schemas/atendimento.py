@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlmodel import Field, SQLModel
 
 
@@ -28,11 +30,11 @@ class AtendimentoPublic(AtendimentoCreate):
     receitas: list[ReceitaPublic] = []
 
 
-class AtendimentohistoricoItem(SQLModel):
+class AtendimentoHistoricoItem(SQLModel):
     atendimento_id: int
     consulta_id: int
-    data_hora_inicio: NaiveDatetime
-    data_hora_fim: NaiveDatetime
+    data_hora_inicio: datetime
+    data_hora_fim: datetime
     medico_id: int
     medico_nome: str
     especialidade_id: int
@@ -49,4 +51,4 @@ class ProntuarioPacientePublic(SQLModel):
     paciente_nome: str
     paciente_cpf: str
     total_atendimentos: int
-    atendimentos: list[AtendimentohistoricoItem] = []
+    atendimentos: list[AtendimentoHistoricoItem] = []

@@ -34,6 +34,7 @@ class Prontuario(ProntuarioBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
     consulta: Consulta = Relationship(back_populates="prontuario")
+    receitas: list["Receita"] = Relationship(back_populates="atendimento")
 
 
 class ReceitaBase(SQLModel):

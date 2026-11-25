@@ -4,8 +4,16 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
 
-from app.routers import agendas, bloqueios, consultas, consultas_relacionadas, especialidades, medicos, pacientes
-
+from app.routers import (
+    agendas,
+    atendimentos,
+    bloqueios,
+    consultas,
+    consultas_relacionadas,
+    especialidades,
+    medicos,
+    pacientes,
+)
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -18,22 +26,35 @@ app.include_router(agendas.router)
 app.include_router(consultas.router)
 app.include_router(bloqueios.router)
 app.include_router(consultas_relacionadas.router)
+app.include_router(atendimentos.router)
+
 
 @app.exception_handler(IntegrityError)
 def tratar_conflito_de_dados(request: Request, erro: IntegrityError):
-    logger.warning("Conflito de dados em %s %s: %s", request.method, request.url.path, erro)
+    logger.warning(
+        "Conflito de dados em %s %s: %s", request.method, request.url.path, erro
+    )
     return JSONResponse(
         status_code=409,
         content={"detail": "A operação conflita com dados já existentes."},
     )
 
+
 @app.exception_handler(OperationalError)
 def tratar_banco_indisponivel(request: Request, erro: OperationalError):
-    logger.error("Banco de dados indisponível em %s %s: %s", request.method, request.url.path, erro)
+    logger.error(
+        "Banco de dados indisponível em %s %s: %s",
+        request.method,
+        request.url.path,
+        erro,
+    )
     return JSONResponse(
         status_code=503,
-        content={"detail": "Banco de dados indisponível no momento. Tente novamente em instantes."},
+        content={
+            "detail": "Banco de dados indisponível no momento. Tente novamente em instantes."
+        },
     )
+
 
 @app.exception_handler(SQLAlchemyError)
 def tratar_erro_de_banco(request: Request, erro: SQLAlchemyError):

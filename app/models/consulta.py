@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from pydantic import NaiveDatetime
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -32,3 +34,22 @@ class Prontuario(ProntuarioBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
     consulta: Consulta = Relationship(back_populates="prontuario")
+    receitas: list["Receita"] = Relationship(back_populates="atendimento")
+
+
+class ReceitaBase(SQLModel):
+    atendimento_id: int = Field(foreign_key="prontuarios.id", index=True)
+    medicamento: str = Field(min_length=2, max_length=150)
+    dosagem: str = Field(min_length=1, max_length=100)
+    frequencia: str = Field(min_length=2, max_length=100)
+    duracao: str = Field(min_length=2, max_length=100)
+    observacoes: str | None = Field(default=None, max_length=500)
+
+
+class Receita(ReceitaBase, table=True):
+    __tablename__ = "receitas"
+
+    id: int | None = Field(default=None, primary_key=True)
+    criado_em: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    atendimento: Prontuario = Relationship(back_populates="receitas")

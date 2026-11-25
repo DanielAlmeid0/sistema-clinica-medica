@@ -7,9 +7,15 @@ from sqlmodel import Session, select
 
 from app.core.database import get_session
 from app.models import Consulta
-from app.schemas.consulta import ConsultaCreate, ConsultaPublic, PaginaConsultas
 from app.schemas.paginacao import Paginacao
-from app.services.agendamento import agendar_consulta, cancelar_consulta
+from app.schemas.consulta import ConsultaCreate, ConsultaPublic, ConsultaRemarcar, PaginaConsultas
+from app.services.agendamento import (
+    agendar_consulta,
+    cancelar_consulta,
+    realizar_consulta,
+    registrar_nao_comparecimento,
+    remarcar_consulta,
+)
 
 router = APIRouter(prefix="/consultas", tags=["Consultas"])
 
@@ -32,6 +38,20 @@ def buscar_consulta(consulta_id: int, session: Session = Depends(get_session)):
 @router.patch("/{consulta_id}/cancelar", response_model=ConsultaPublic)
 def cancelar(consulta_id: int, session: Session = Depends(get_session)):
     return cancelar_consulta(session, consulta_id)
+
+@router.patch("/{consulta_id}/remarcar", response_model=ConsultaPublic)
+def remarcar(consulta_id: int, dados: ConsultaRemarcar, session: Session = Depends(get_session)):
+    return remarcar_consulta(session, consulta_id, dados.data_hora_inicio)
+
+
+@router.patch("/{consulta_id}/realizar", response_model=ConsultaPublic)
+def realizar(consulta_id: int, session: Session = Depends(get_session)):
+    return realizar_consulta(session, consulta_id)
+
+
+@router.patch("/{consulta_id}/nao-compareceu", response_model=ConsultaPublic)
+def nao_compareceu(consulta_id: int, session: Session = Depends(get_session)):
+    return registrar_nao_comparecimento(session, consulta_id)
 
 
 @router.get("/", response_model=PaginaConsultas)

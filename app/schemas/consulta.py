@@ -11,6 +11,9 @@ class ConsultaCreate(SQLModel):
     especialidade_id: int
     data_hora_inicio: NaiveDatetime
 
+class ConsultaRemarcar(SQLModel):
+    data_hora_inicio: NaiveDatetime
+
 
 class ConsultaPublic(ConsultaBase):
     id: int

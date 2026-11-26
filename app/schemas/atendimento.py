@@ -18,7 +18,7 @@ class ReceitaPublic(ReceitaCreate):
 
 
 class AtendimentoCreate(SQLModel):
-    observacoes_clinicas: str | None = Field(default=None, max_length=500)
+    observacoes_clinicas: str = Field(min_length=5, max_length=500)
     prescricao_medicamentos: str | None = Field(default=None)
     orientacoes: str | None = Field(default=None)
     data_retorno: int | None = Field(default=None, gt=0)
@@ -49,6 +49,5 @@ class AtendimentoHistoricoItem(SQLModel):
 class ProntuarioPacientePublic(SQLModel):
     paciente_id: int
     paciente_nome: str
-    paciente_cpf: str
     total_atendimentos: int
     atendimentos: list[AtendimentoHistoricoItem] = []

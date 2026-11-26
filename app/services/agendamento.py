@@ -60,15 +60,34 @@ def calcular_fim_pela_agenda(
         )
     ).all()
 
+    desalinhada = None
+
     for agenda in agendas:
-        fim = inicio + timedelta(minutes=agenda.duracao_consulta)
-        if fim.date() == inicio.date() and fim.time() <= agenda.hora_fim:
+        duracao = timedelta(minutes=agenda.duracao_consulta)
+        fim = inicio + duracao
+        if fim.date() != inicio.date() or fim.time() > agenda.hora_fim:
+            continue
+
+        desde_o_inicio = inicio - datetime.combine(inicio.date(), agenda.hora_inicio)
+        if desde_o_inicio % duracao == timedelta(0):
             return fim
+        desalinhada = agenda
+
+    if desalinhada:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"O horário deve seguir a grade do médico: consultas de "
+                f"{desalinhada.duracao_consulta} em {desalinhada.duracao_consulta} minutos, "
+                f"a partir das {desalinhada.hora_inicio:%H:%M}"
+            ),
+        )
 
     raise HTTPException(
         status_code=409,
         detail="O médico não atende essa especialidade nesse dia e horário",
     )
+
 
 
 def verificar_bloqueio(session: Session, medico_id: int, inicio: datetime, fim: datetime) -> None:

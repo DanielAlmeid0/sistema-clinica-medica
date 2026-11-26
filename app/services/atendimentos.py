@@ -92,6 +92,16 @@ def obter_prontuario_paciente(
         .order_by(Consulta.data_hora_inicio.desc())
     ).all()
 
+    receitas_por_atendimento: dict[int, list[Receita]] = {}
+    ids = [prontuario.id for prontuario, _, _, _ in linhas]
+    if ids:
+        receitas_do_paciente = session.exec(
+            select(Receita).where(Receita.atendimento_id.in_(ids)).order_by(Receita.id)
+        ).all()
+        for receita in receitas_do_paciente:
+            receitas_por_atendimento.setdefault(receita.atendimento_id, []).append(receita)
+
+
     historico: list[AtendimentoHistoricoItem] = []
     for prontuario, consulta, medico, especialidade in linhas:
         receitas = session.exec(
